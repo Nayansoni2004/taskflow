@@ -1,11 +1,10 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeDashboardView from '../views/HomeDashboardView.vue'
+import HomeLandingView from '../views/HomeLandingView.vue'
 
 const routes = [
-  { path: '/', name: 'home', component: HomeDashboardView, meta: { title: 'Home Dashboard' } },
-  { path: '/today', name: 'today', component: () => import('../views/TodayView.vue'), meta: { title: 'Today' } },
-  { path: '/calendar', name: 'calendar', component: () => import('../views/CalendarView.vue'), meta: { title: 'Calendar' } },
-  { path: '/completed', name: 'completed', component: () => import('../views/CompletedView.vue'), meta: { title: 'Completed' } },
+  { path: '/', name: 'home', component: HomeLandingView, meta: { title: 'TaskFlow' } },
+  { path: '/tasks', name: 'tasks', component: () => import('../views/DailyTasksView.vue'), meta: { title: 'Daily Tasks' } },
+  { path: '/calendar', name: 'calendar', component: () => import('../views/CalendarView.vue'), meta: { title: 'Schedule Calendar' } },
   { path: '/:pathMatch(.*)*', redirect: '/' }
 ]
 

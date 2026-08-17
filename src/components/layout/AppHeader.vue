@@ -1,14 +1,17 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { useThemeStore } from '../../stores/themeStore.js'
+import { useUIStore } from '../../stores/uiStore.js'
+import { NotificationService } from '../../services/notificationService.js'
+import { usePWAInstall } from '../../composables/usePWAInstall.js'
 import { 
   Search, 
-  Sun, 
-  Moon, 
   Sparkles, 
   Plus, 
   CheckSquare,
+  Bell,
+  BellOff,
+  Download,
   X
 } from 'lucide-vue-next'
 
@@ -19,25 +22,38 @@ const props = defineProps({
 const emit = defineEmits(['add-task', 'open-focus'])
 
 const route = useRoute()
-const themeStore = useThemeStore()
+const uiStore = useUIStore()
+const { promptInstall } = usePWAInstall()
 
 const formattedDate = computed(() => {
   const now = new Date()
   return now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
 })
 
+async function toggleNotifications() {
+  const perm = await NotificationService.requestPermission()
+  uiStore.updateNotificationPermission(perm)
+  if (perm === 'granted') {
+    NotificationService.sendNotification('TaskFlow Alerts Enabled', {
+      body: 'You will receive push notifications for scheduled tasks & meetings!'
+    })
+  } else {
+    alert('Push notification permissions are disabled in your browser settings.')
+  }
+}
+
 function clearSearch() {
-  themeStore.searchQuery = ''
+  uiStore.searchQuery = ''
 }
 </script>
 
 <template>
   <header class="app-header">
     <div class="header-container">
-      <!-- Mobile Logo Header -->
+      <!-- Mobile Logo Header (No PRO Badge) -->
       <div class="mobile-logo-box">
         <div class="mini-brand-icon">
-          <CheckSquare :size="20" />
+          <CheckSquare :size="18" />
         </div>
         <span class="mini-brand-title">Task<span>Flow</span></span>
       </div>
@@ -50,35 +66,46 @@ function clearSearch() {
 
       <!-- Global Search Bar -->
       <div class="header-search-box">
-        <Search :size="18" class="search-icon" />
+        <Search :size="16" class="search-icon" />
         <input 
-          v-model="themeStore.searchQuery"
+          v-model="uiStore.searchQuery"
           type="text" 
-          placeholder="Search tasks, tags, or categories..." 
+          placeholder="Search tasks or categories..." 
           class="search-input"
         />
-        <button v-if="themeStore.searchQuery" class="clear-search-btn" @click="clearSearch">
+        <button v-if="uiStore.searchQuery" class="clear-search-btn" @click="clearSearch">
           <X :size="14" />
         </button>
       </div>
 
-      <!-- Header Quick Actions -->
+      <!-- Header Action Items -->
       <div class="header-actions">
+        <!-- Notification Toggle -->
+        <button 
+          :class="['header-icon-btn', { active: uiStore.pushNotificationPermission === 'granted' }]" 
+          :title="uiStore.pushNotificationPermission === 'granted' ? 'Push Alerts Enabled' : 'Enable Push Alerts'"
+          @click="toggleNotifications"
+        >
+          <Bell v-if="uiStore.pushNotificationPermission === 'granted'" :size="17" class="bell-active" />
+          <BellOff v-else :size="17" />
+          <span class="btn-text">Alerts</span>
+        </button>
+
         <!-- Focus Timer Button -->
         <button class="header-icon-btn focus-btn" title="Focus Timer" @click="emit('open-focus')">
-          <Sparkles :size="18" />
+          <Sparkles :size="17" />
           <span class="btn-text">Focus</span>
         </button>
 
-        <!-- Dark/Light Theme Toggle -->
-        <button class="header-icon-btn theme-toggle-btn" title="Toggle Theme" @click="themeStore.toggleTheme">
-          <Sun v-if="themeStore.theme === 'dark'" :size="18" />
-          <Moon v-else :size="18" />
+        <!-- PWA Download Button -->
+        <button class="header-icon-btn pwa-btn" title="Install Offline App" @click="promptInstall">
+          <Download :size="17" />
+          <span class="btn-text">Install</span>
         </button>
 
-        <!-- New Task Button (Desktop/Tablet) -->
+        <!-- New Task Button -->
         <button class="btn btn-primary header-add-btn" @click="emit('add-task')">
-          <Plus :size="18" />
+          <Plus :size="17" />
           <span>Task</span>
         </button>
       </div>
@@ -94,19 +121,17 @@ function clearSearch() {
   position: sticky;
   top: 0;
   z-index: 800;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
 }
 
 .header-container {
   height: 100%;
   padding: 0 32px;
-  max-width: 1320px;
+  max-width: 1200px;
   margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
+  gap: 16px;
 }
 
 @media (max-width: 768px) {
@@ -131,11 +156,11 @@ function clearSearch() {
   width: 32px;
   height: 32px;
   border-radius: var(--radius-sm);
-  background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+  background-color: var(--accent-volt);
+  color: var(--text-main);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ffffff;
 }
 
 .mini-brand-title {
@@ -145,14 +170,14 @@ function clearSearch() {
   color: var(--text-main);
 
   span {
-    color: var(--primary);
+    color: var(--text-muted);
   }
 }
 
 .header-title-area {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 @media (max-width: 1024px) {
@@ -162,23 +187,22 @@ function clearSearch() {
 }
 
 .header-page-title {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--text-main);
+  font-size: 1.15rem;
+  font-weight: 800;
 }
 
 .header-date-badge {
-  font-size: 0.78rem;
-  font-weight: 500;
+  font-size: 0.75rem;
+  font-weight: 600;
   color: var(--text-muted);
   background-color: var(--bg-subtle);
-  padding: 3px 10px;
+  padding: 3px 9px;
   border-radius: 99px;
 }
 
 .header-search-box {
   flex: 1;
-  max-width: 420px;
+  max-width: 360px;
   position: relative;
   display: flex;
   align-items: center;
@@ -192,12 +216,12 @@ function clearSearch() {
 
 .search-input {
   width: 100%;
-  padding: 9px 36px 9px 38px;
+  padding: 8px 32px 8px 36px;
   border-radius: 99px;
   border: 1px solid var(--border-subtle);
   background-color: var(--bg-subtle);
   color: var(--text-main);
-  font-size: 0.88rem;
+  font-size: 0.85rem;
   font-family: var(--font-sans);
   outline: none;
   transition: all 0.2s ease;
@@ -205,8 +229,8 @@ function clearSearch() {
 
 .search-input:focus {
   border-color: var(--primary);
-  background-color: var(--bg-surface-elevated);
-  box-shadow: 0 0 0 3px var(--primary-light);
+  background-color: var(--bg-surface);
+  box-shadow: 0 0 0 2px rgba(9, 9, 11, 0.1);
 }
 
 .clear-search-btn {
@@ -224,20 +248,20 @@ function clearSearch() {
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .header-icon-btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   padding: 8px 12px;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-full);
   border: 1px solid var(--border-subtle);
-  background-color: var(--bg-surface-elevated);
+  background-color: var(--bg-surface);
   color: var(--text-muted);
-  font-size: 0.85rem;
-  font-weight: 500;
+  font-size: 0.82rem;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -247,10 +271,18 @@ function clearSearch() {
   color: var(--text-main);
 }
 
+.header-icon-btn.active {
+  border-color: var(--accent-volt);
+  background-color: var(--accent-volt-light);
+  color: var(--text-main);
+}
+
+.bell-active {
+  color: #84cc16;
+}
+
 .focus-btn {
-  color: var(--accent);
-  background-color: var(--accent-light);
-  border-color: rgba(139, 92, 246, 0.2);
+  background-color: var(--bg-subtle);
 }
 
 @media (max-width: 640px) {

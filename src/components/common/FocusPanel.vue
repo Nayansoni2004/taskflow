@@ -62,14 +62,16 @@ onUnmounted(() => {
 
 <template>
   <div class="modal-overlay" @click.self="emit('close')">
-    <div class="focus-card animate-slide-up">
+    <div class="focus-card flow-dark-card animate-slide-up">
       <!-- Header -->
       <div class="focus-header">
         <div class="focus-title">
-          <Sparkles :size="20" class="sparkle-icon" />
-          <span>Focus Mode</span>
+          <div class="volt-icon-dot">
+            <Sparkles :size="16" />
+          </div>
+          <span>Focus Timer</span>
         </div>
-        <button class="btn-icon btn-ghost" @click="emit('close')">
+        <button class="btn-icon btn-ghost close-btn" @click="emit('close')">
           <X :size="20" />
         </button>
       </div>
@@ -80,36 +82,36 @@ onUnmounted(() => {
           :class="['mode-tab', { active: mode === 'focus' }]" 
           @click="switchMode('focus')"
         >
-          <Sparkles :size="16" />
+          <Sparkles :size="15" />
           Focus (25m)
         </button>
         <button 
           :class="['mode-tab', { active: mode === 'break' }]" 
           @click="switchMode('break')"
         >
-          <Coffee :size="16" />
+          <Coffee :size="15" />
           Break (5m)
         </button>
       </div>
 
       <!-- Timer Display -->
-      <div class="timer-display pulse-glow">
+      <div class="timer-display">
         <div class="time-text">{{ minutes }}:{{ seconds }}</div>
         <span class="timer-status">
-          {{ isRunning ? (mode === 'focus' ? 'Deep Focus Session' : 'Relaxing Break') : 'Paused' }}
+          {{ isRunning ? (mode === 'focus' ? 'Deep Focus Block' : 'Relaxing Break') : 'Ready' }}
         </span>
       </div>
 
       <!-- Control Buttons -->
       <div class="timer-controls">
-        <button class="btn btn-primary main-control-btn" @click="toggleTimer">
-          <Pause v-if="isRunning" :size="22" />
-          <Play v-else :size="22" />
+        <button class="btn btn-volt main-control-btn" @click="toggleTimer">
+          <Pause v-if="isRunning" :size="20" />
+          <Play v-else :size="20" />
           <span>{{ isRunning ? 'Pause' : 'Start Session' }}</span>
         </button>
 
         <button class="btn btn-secondary reset-btn" title="Reset Timer" @click="resetTimer">
-          <RotateCcw :size="20" />
+          <RotateCcw :size="18" />
         </button>
       </div>
     </div>
@@ -118,17 +120,13 @@ onUnmounted(() => {
 
 <style scoped>
 .focus-card {
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-xl);
   width: 100%;
-  max-width: 420px;
-  padding: 28px;
+  max-width: 400px;
+  padding: 32px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 24px;
-  box-shadow: var(--shadow-xl);
 }
 
 .focus-header {
@@ -141,20 +139,36 @@ onUnmounted(() => {
 .focus-title {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   font-family: var(--font-display);
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--text-main);
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #ffffff;
 }
 
-.sparkle-icon {
-  color: var(--accent);
+.volt-icon-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background-color: var(--accent-volt);
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-btn {
+  color: #a1a1aa;
+}
+
+.close-btn:hover {
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 .mode-tabs {
   display: flex;
-  background-color: var(--bg-subtle);
+  background-color: rgba(255, 255, 255, 0.08);
   padding: 4px;
   border-radius: 99px;
   width: 100%;
@@ -170,25 +184,24 @@ onUnmounted(() => {
   border-radius: 99px;
   border: none;
   background: transparent;
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  font-weight: 600;
+  color: #a1a1aa;
+  font-size: 0.82rem;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .mode-tab.active {
-  background-color: var(--bg-surface-elevated);
-  color: var(--primary);
-  box-shadow: var(--shadow-sm);
+  background-color: #ffffff;
+  color: var(--text-main);
 }
 
 .timer-display {
-  width: 220px;
-  height: 220px;
+  width: 200px;
+  height: 200px;
   border-radius: 50%;
-  border: 4px solid var(--primary-light);
-  background: radial-gradient(circle, var(--primary-light) 0%, transparent 70%);
+  border: 3px solid rgba(184, 240, 0, 0.3);
+  background: radial-gradient(circle, rgba(184, 240, 0, 0.08) 0%, transparent 70%);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -198,34 +211,41 @@ onUnmounted(() => {
 
 .time-text {
   font-family: var(--font-display);
-  font-size: 3.5rem;
+  font-size: 3.2rem;
   font-weight: 800;
-  color: var(--text-main);
+  color: #ffffff;
   letter-spacing: -0.03em;
 }
 
 .timer-status {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--text-subtle);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--accent-volt);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
 }
 
 .timer-controls {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   width: 100%;
 }
 
 .main-control-btn {
   flex: 1;
   padding: 12px;
-  font-size: 1rem;
+  font-size: 0.95rem;
 }
 
 .reset-btn {
   padding: 12px;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.reset-btn:hover {
+  background-color: rgba(255, 255, 255, 0.2);
 }
 </style>

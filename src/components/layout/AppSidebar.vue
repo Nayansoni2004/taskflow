@@ -1,43 +1,41 @@
 <script setup>
-import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useTaskStore } from '../../stores/taskStore.js'
-import { useThemeStore } from '../../stores/themeStore.js'
+import { useUIStore } from '../../stores/uiStore.js'
 import { 
   CheckSquare, 
   Home, 
+  CheckCircle,
   Calendar as CalendarIcon, 
-  CheckCircle, 
   Plus, 
-  Sun, 
-  Moon, 
-  Clock, 
-  FolderKanban,
+  Sparkles, 
   Briefcase,
   User,
   GraduationCap,
-  Sparkles
+  FolderKanban,
+  Download
 } from 'lucide-vue-next'
+import { usePWAInstall } from '../../composables/usePWAInstall.js'
 
 const emit = defineEmits(['add-task', 'open-focus'])
 
 const route = useRoute()
 const router = useRouter()
 const taskStore = useTaskStore()
-const themeStore = useThemeStore()
+const uiStore = useUIStore()
+const { promptInstall } = usePWAInstall()
 
 const navItems = [
-  { name: 'Home', path: '/', icon: Home, count: () => taskStore.pending.length },
-  { name: 'Today', path: '/today', icon: Clock, count: () => taskStore.dueToday.length },
-  { name: 'Calendar', path: '/calendar', icon: CalendarIcon },
-  { name: 'Completed', path: '/completed', icon: CheckCircle, count: () => taskStore.completed.length }
+  { name: 'Home', path: '/', icon: Home },
+  { name: 'Daily Tasks', path: '/tasks', icon: CheckCircle, count: () => taskStore.pending.length },
+  { name: 'Schedule Calendar', path: '/calendar', icon: CalendarIcon }
 ]
 
 const categories = [
-  { name: 'Work', icon: Briefcase, color: '#6366f1' },
-  { name: 'Personal', icon: User, color: '#10b981' },
-  { name: 'Study', icon: GraduationCap, color: '#f59e0b' },
-  { name: 'Projects', icon: FolderKanban, color: '#8b5cf6' }
+  { name: 'Work', icon: Briefcase, color: '#09090b' },
+  { name: 'Personal', icon: User, color: '#b8f000' },
+  { name: 'Study', icon: GraduationCap, color: '#8b5cf6' },
+  { name: 'Projects', icon: FolderKanban, color: '#10b981' }
 ]
 
 function getCategoryCount(catName) {
@@ -45,41 +43,40 @@ function getCategoryCount(catName) {
 }
 
 function selectCategory(catName) {
-  if (themeStore.activeCategory === catName) {
-    themeStore.activeCategory = 'all'
+  if (uiStore.activeCategory === catName) {
+    uiStore.activeCategory = 'all'
   } else {
-    themeStore.activeCategory = catName
+    uiStore.activeCategory = catName
   }
-  if (route.path !== '/') {
-    router.push('/')
+  if (route.path !== '/tasks') {
+    router.push('/tasks')
   }
 }
 </script>
 
 <template>
   <aside class="sidebar-container">
-    <!-- Brand Logo -->
+    <!-- Brand Logo - Clean TaskFlow (No PRO label) -->
     <div class="sidebar-brand">
       <div class="brand-icon-box">
-        <CheckSquare :size="24" />
+        <CheckSquare :size="22" />
       </div>
       <div class="brand-text">
         <span class="brand-name">Task<span>Flow</span></span>
-        <span class="brand-badge">Pro</span>
       </div>
     </div>
 
     <!-- Quick Action Button -->
     <div class="sidebar-action">
       <button class="btn btn-primary new-task-btn" @click="emit('add-task')">
-        <Plus :size="20" />
+        <Plus :size="18" />
         <span>New Task</span>
       </button>
     </div>
 
     <!-- Main Navigation Links -->
     <nav class="sidebar-nav">
-      <div class="nav-section-title">Overview</div>
+      <div class="nav-section-title">Navigation</div>
       <router-link
         v-for="item in navItems"
         :key="item.path"
@@ -87,7 +84,7 @@ function selectCategory(catName) {
         class="nav-link"
         :class="{ active: route.path === item.path }"
       >
-        <component :is="item.icon" :size="20" class="nav-icon" />
+        <component :is="item.icon" :size="19" class="nav-icon" />
         <span class="nav-label">{{ item.name }}</span>
         <span v-if="item.count && item.count() > 0" class="nav-badge">
           {{ item.count() }}
@@ -100,32 +97,29 @@ function selectCategory(catName) {
         v-for="cat in categories"
         :key="cat.name"
         class="category-item"
-        :class="{ active: themeStore.activeCategory === cat.name }"
+        :class="{ active: uiStore.activeCategory === cat.name }"
         @click="selectCategory(cat.name)"
       >
         <div class="cat-left">
           <span class="cat-dot" :style="{ backgroundColor: cat.color }"></span>
-          <component :is="cat.icon" :size="18" class="cat-icon" />
+          <component :is="cat.icon" :size="17" class="cat-icon" />
           <span class="cat-name">{{ cat.name }}</span>
         </div>
         <span class="cat-count">{{ getCategoryCount(cat.name) }}</span>
       </div>
     </nav>
 
-    <!-- Sidebar Bottom Footer -->
+    <!-- Sidebar Bottom Action -->
     <div class="sidebar-footer">
       <button class="focus-timer-btn" @click="emit('open-focus')">
         <Sparkles :size="18" />
-        <span>Focus Mode</span>
+        <span>Focus Timer</span>
       </button>
 
-      <div class="theme-toggle-wrapper">
-        <button class="theme-btn" @click="themeStore.toggleTheme">
-          <Sun v-if="themeStore.theme === 'dark'" :size="18" />
-          <Moon v-else :size="18" />
-          <span>{{ themeStore.theme === 'dark' ? 'Light Mode' : 'Dark Mode' }}</span>
-        </button>
-      </div>
+      <button class="pwa-download-btn" @click="promptInstall">
+        <Download :size="16" />
+        <span>Download App</span>
+      </button>
     </div>
   </aside>
 </template>
@@ -142,7 +136,7 @@ function selectCategory(catName) {
   display: flex;
   flex-direction: column;
   z-index: 100;
-  padding: 24px 16px;
+  padding: 24px 18px;
   overflow-y: auto;
 }
 
@@ -155,59 +149,49 @@ function selectCategory(catName) {
 .sidebar-brand {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 0 8px 24px 8px;
+  gap: 10px;
+  padding: 0 4px 20px 4px;
   border-bottom: 1px solid var(--border-subtle);
 }
 
 .brand-icon-box {
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   border-radius: var(--radius-md);
-  background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+  background-color: var(--accent-volt);
+  color: var(--text-main);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ffffff;
-  box-shadow: 0 4px 12px var(--primary-glow);
+  box-shadow: 0 4px 12px var(--accent-volt-light);
 }
 
 .brand-text {
   display: flex;
   align-items: center;
-  gap: 8px;
 }
 
 .brand-name {
   font-family: var(--font-display);
-  font-size: 1.4rem;
+  font-size: 1.45rem;
   font-weight: 800;
   color: var(--text-main);
+  letter-spacing: -0.03em;
 
   span {
-    color: var(--primary);
+    color: var(--text-muted);
   }
 }
 
-.brand-badge {
-  font-size: 0.65rem;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 99px;
-  background-color: var(--primary-light);
-  color: var(--primary);
-  text-transform: uppercase;
-}
-
 .sidebar-action {
-  margin: 20px 0;
+  margin: 18px 0;
 }
 
 .new-task-btn {
   width: 100%;
-  padding: 12px;
-  border-radius: var(--radius-md);
-  font-size: 0.95rem;
+  padding: 11px;
+  border-radius: var(--radius-full);
+  font-size: 0.92rem;
 }
 
 .sidebar-nav {
@@ -218,24 +202,24 @@ function selectCategory(catName) {
 }
 
 .nav-section-title {
-  font-size: 0.75rem;
-  font-weight: 700;
+  font-size: 0.72rem;
+  font-weight: 800;
   color: var(--text-subtle);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   margin: 16px 8px 8px 8px;
 }
 
 .nav-link {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   padding: 10px 12px;
   border-radius: var(--radius-md);
   color: var(--text-muted);
   text-decoration: none;
-  font-weight: 500;
-  font-size: 0.9rem;
+  font-weight: 600;
+  font-size: 0.88rem;
   transition: all 0.2s ease;
 }
 
@@ -245,31 +229,18 @@ function selectCategory(catName) {
 }
 
 .nav-link.active {
-  background-color: var(--primary-light);
-  color: var(--primary);
-  font-weight: 600;
-}
-
-.nav-icon {
-  flex-shrink: 0;
-}
-
-.nav-label {
-  flex: 1;
+  background-color: var(--primary);
+  color: #ffffff;
 }
 
 .nav-badge {
-  background-color: var(--bg-subtle);
-  color: var(--text-muted);
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 2px 8px;
+  background-color: var(--accent-volt);
+  color: var(--text-main);
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 2px 7px;
   border-radius: 99px;
-}
-
-.nav-link.active .nav-badge {
-  background-color: var(--primary);
-  color: #ffffff;
+  margin-left: auto;
 }
 
 .category-item {
@@ -279,7 +250,8 @@ function selectCategory(catName) {
   padding: 8px 12px;
   border-radius: var(--radius-md);
   color: var(--text-muted);
-  font-size: 0.88rem;
+  font-size: 0.85rem;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -292,7 +264,7 @@ function selectCategory(catName) {
 .category-item.active {
   background-color: var(--bg-subtle);
   color: var(--primary);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .cat-left {
@@ -318,7 +290,7 @@ function selectCategory(catName) {
   border-top: 1px solid var(--border-subtle);
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .focus-timer-btn {
@@ -328,39 +300,39 @@ function selectCategory(catName) {
   gap: 8px;
   width: 100%;
   padding: 10px;
-  border-radius: var(--radius-md);
-  background: linear-gradient(135deg, var(--accent-light) 0%, var(--primary-light) 100%);
-  color: var(--accent);
-  border: 1px solid rgba(139, 92, 246, 0.2);
-  font-weight: 600;
+  border-radius: var(--radius-full);
+  background-color: var(--accent-volt);
+  color: var(--text-main);
+  border: none;
+  font-weight: 800;
   font-size: 0.88rem;
   cursor: pointer;
   transition: all 0.2s ease;
+  box-shadow: var(--shadow-volt);
 }
 
 .focus-timer-btn:hover {
   transform: translateY(-1px);
-  box-shadow: var(--shadow-sm);
 }
 
-.theme-btn {
+.pwa-download-btn {
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
+  gap: 8px;
   width: 100%;
-  padding: 10px 12px;
-  border-radius: var(--radius-md);
+  padding: 9px;
+  border-radius: var(--radius-full);
+  background-color: var(--bg-subtle);
+  color: var(--text-main);
   border: 1px solid var(--border-subtle);
-  background-color: var(--bg-surface-elevated);
-  color: var(--text-muted);
-  font-size: 0.88rem;
-  font-weight: 500;
+  font-size: 0.82rem;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
-.theme-btn:hover {
-  background-color: var(--bg-subtle);
-  color: var(--text-main);
+.pwa-download-btn:hover {
+  background-color: var(--border-subtle);
 }
 </style>

@@ -1,253 +1,324 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useTaskStore } from '../stores/taskStore.js'
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus } from 'lucide-vue-next'
+import TaskCard from '../components/task/TaskCard.vue'
+import { 
+  Calendar as CalendarIcon, 
+  ChevronLeft, 
+  ChevronRight, 
+  Plus, 
+  Clock, 
+  CheckCircle2, 
+  Inbox
+} from 'lucide-vue-next'
 
 const emit = defineEmits(['add-task', 'edit-task'])
 const taskStore = useTaskStore()
 
-const currentDate = ref(new Date())
+// State for active date
+const selectedDate = ref(new Date().toLocaleDateString('en-CA')) // YYYY-MM-DD
+const currentWeekStart = ref(getWeekStartDate(new Date()))
 
-const currentMonthYear = computed(() => {
-  return currentDate.value.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-})
+function getWeekStartDate(d) {
+  const date = new Date(d)
+  const day = date.getDay()
+  const diff = date.getDate() - day + (day === 0 ? -6 : 1) // Adjust for Monday start
+  return new Date(date.setDate(diff))
+}
 
-const daysInMonth = computed(() => {
-  const year = currentDate.value.getFullYear()
-  const month = currentDate.value.getMonth()
-  const firstDay = new Date(year, month, 1).getDay()
-  const daysCount = new Date(year, month + 1, 0).getDate()
-
+// Generate 7 days for the current week strip
+const weekDaysList = computed(() => {
   const days = []
-  for (let i = 0; i < firstDay; i++) {
-    days.push({ day: null, dateStr: null })
-  }
-  for (let d = 1; d <= daysCount; d++) {
-    const monthStr = String(month + 1).padStart(2, '0')
-    const dayStr = String(d).padStart(2, '0')
-    const dateStr = `${year}-${monthStr}-${dayStr}`
-    days.push({ day: d, dateStr })
+  const start = new Date(currentWeekStart.value)
+
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(start)
+    d.setDate(start.getDate() + i)
+    const dateStr = d.toLocaleDateString('en-CA')
+    const dayNum = d.getDate()
+    const weekName = d.toLocaleDateString('en-US', { weekday: 'short' })
+    const isToday = dateStr === new Date().toLocaleDateString('en-CA')
+    const hasTasks = taskStore.tasks.some(t => t.dueDate === dateStr)
+
+    days.push({ dateStr, dayNum, weekName, isToday, hasTasks })
   }
   return days
 })
 
-function prevMonth() {
-  currentDate.value = new Date(currentDate.value.getFullYear(), currentDate.value.getMonth() - 1, 1)
+const formattedSelectedDate = computed(() => {
+  const [y, m, d] = selectedDate.value.split('-')
+  const date = new Date(y, m - 1, d)
+  return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
+})
+
+const selectedDateTasks = computed(() => {
+  return taskStore.tasks.filter(t => t.dueDate === selectedDate.value)
+})
+
+function prevWeek() {
+  const d = new Date(currentWeekStart.value)
+  d.setDate(d.getDate() - 7)
+  currentWeekStart.value = d
 }
 
-function nextMonth() {
-  currentDate.value = new Date(currentDate.value.getFullYear(), currentDate.value.getMonth() + 1, 1)
+function nextWeek() {
+  const d = new Date(currentWeekStart.value)
+  d.setDate(d.getDate() + 7)
+  currentWeekStart.value = d
 }
 
-function getTasksForDate(dateStr) {
-  if (!dateStr) return []
-  return taskStore.tasks.filter(t => t.dueDate === dateStr)
+function resetToToday() {
+  const today = new Date()
+  currentWeekStart.value = getWeekStartDate(today)
+  selectedDate.value = today.toLocaleDateString('en-CA')
 }
 
-const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+function handleDeleteTask(id) {
+  taskStore.deleteTask(id)
+}
 </script>
 
 <template>
-  <div class="page-container">
-    <div class="calendar-header-bar">
-      <div class="title-block">
-        <div class="view-icon-badge">
-          <CalendarIcon :size="24" />
-        </div>
-        <div>
-          <h1 class="view-title">Schedule Calendar</h1>
-          <p class="view-subtitle">Visualize tasks across dates.</p>
-        </div>
+  <div class="page-container calendar-page">
+    <!-- Header Block -->
+    <div class="calendar-top-bar">
+      <div>
+        <h1 class="view-title">Schedule Agenda</h1>
+        <p class="view-subtitle">Weekly date strip & task timeline.</p>
       </div>
 
-      <div class="calendar-nav-controls">
-        <button class="nav-arrow-btn" @click="prevMonth">
-          <ChevronLeft :size="20" />
+      <div class="nav-controls">
+        <button class="btn btn-secondary nav-btn" @click="prevWeek">
+          <ChevronLeft :size="18" />
         </button>
-        <span class="month-title">{{ currentMonthYear }}</span>
-        <button class="nav-arrow-btn" @click="nextMonth">
-          <ChevronRight :size="20" />
+        <button class="btn btn-secondary today-btn" @click="resetToToday">
+          Today
+        </button>
+        <button class="btn btn-secondary nav-btn" @click="nextWeek">
+          <ChevronRight :size="18" />
         </button>
       </div>
     </div>
 
-    <!-- Calendar Grid Card -->
-    <div class="calendar-card glass-card">
-      <div class="weekday-header">
-        <div v-for="wd in weekDays" :key="wd" class="weekday-cell">{{ wd }}</div>
-      </div>
-
-      <div class="calendar-grid">
+    <!-- Mobile-Friendly 7-Day Date Strip -->
+    <div class="date-strip-container flow-card">
+      <div class="date-strip-scroll">
         <div 
-          v-for="(cell, index) in daysInMonth" 
-          :key="index" 
-          :class="['day-cell', { empty: !cell.day }]"
+          v-for="item in weekDaysList" 
+          :key="item.dateStr"
+          :class="['date-pill', { active: selectedDate === item.dateStr, today: item.isToday }]"
+          @click="selectedDate = item.dateStr"
         >
-          <div v-if="cell.day" class="day-cell-content">
-            <span class="day-number">{{ cell.day }}</span>
-            <div class="day-tasks-list">
-              <div 
-                v-for="task in getTasksForDate(cell.dateStr)" 
-                :key="task.id"
-                :class="['mini-task-pill', { completed: task.completed }]"
-                @click="emit('edit-task', task)"
-              >
-                {{ task.title }}
-              </div>
-            </div>
-          </div>
+          <span class="day-name">{{ item.weekName }}</span>
+          <span class="day-number">{{ item.dayNum }}</span>
+          <span v-if="item.hasTasks" class="task-dot"></span>
         </div>
       </div>
     </div>
+
+    <!-- Selected Date Banner -->
+    <div class="selected-date-header">
+      <div class="date-info">
+        <h2 class="date-title">{{ formattedSelectedDate }}</h2>
+        <span class="task-count-badge">
+          {{ selectedDateTasks.length }} task{{ selectedDateTasks.length === 1 ? '' : 's' }}
+        </span>
+      </div>
+
+      <button class="btn btn-primary add-date-task-btn" @click="emit('add-task', { dueDate: selectedDate })">
+        <Plus :size="17" />
+        <span>Add for Date</span>
+      </button>
+    </div>
+
+    <!-- Agenda Task List for Selected Date -->
+    <section class="agenda-section">
+      <div v-if="selectedDateTasks.length > 0" class="agenda-list">
+        <TaskCard 
+          v-for="task in selectedDateTasks"
+          :key="task.id"
+          :task="task"
+          @edit="emit('edit-task', $event)"
+          @delete="handleDeleteTask"
+        />
+      </div>
+
+      <!-- Empty State for Selected Date -->
+      <div v-else class="empty-date-state flow-card">
+        <div class="empty-icon-circle">
+          <Inbox :size="36" />
+        </div>
+        <h3>No tasks scheduled</h3>
+        <p>Your agenda is clear for {{ formattedSelectedDate }}.</p>
+        <button class="btn btn-primary" @click="emit('add-task', { dueDate: selectedDate })">
+          <Plus :size="17" />
+          <span>Add Task</span>
+        </button>
+      </div>
+    </section>
   </div>
 </template>
 
 <style scoped>
-.calendar-header-bar {
+.calendar-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.calendar-top-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 28px;
   flex-wrap: wrap;
 }
 
-.title-block {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.view-icon-badge {
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius-md);
-  background-color: var(--accent-light);
-  color: var(--accent);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 .view-title {
-  font-size: 1.8rem;
+  font-size: 2rem;
   font-weight: 800;
 }
 
 .view-subtitle {
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   color: var(--text-muted);
 }
 
-.calendar-nav-controls {
+.nav-controls {
   display: flex;
   align-items: center;
-  gap: 16px;
-  background-color: var(--bg-surface-elevated);
-  padding: 6px 16px;
-  border-radius: 99px;
-  border: 1px solid var(--border-subtle);
+  gap: 8px;
 }
 
-.month-title {
-  font-family: var(--font-display);
-  font-size: 1.1rem;
-  font-weight: 700;
-  min-width: 150px;
-  text-align: center;
+.nav-btn {
+  padding: 8px 12px;
+  border-radius: var(--radius-full);
 }
 
-.nav-arrow-btn {
-  background: transparent;
-  border: none;
-  color: var(--text-muted);
-  cursor: pointer;
-  padding: 4px;
+.today-btn {
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  font-size: 0.85rem;
+}
+
+/* Date Strip Component */
+.date-strip-container {
+  padding: 14px 18px;
+}
+
+.date-strip-scroll {
   display: flex;
   align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  transition: all 0.2s ease;
-}
-
-.nav-arrow-btn:hover {
-  background-color: var(--bg-subtle);
-  color: var(--text-main);
-}
-
-.calendar-card {
-  padding: 20px;
+  justify-content: space-between;
+  gap: 10px;
   overflow-x: auto;
 }
 
-.weekday-header {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 8px;
-  margin-bottom: 12px;
-  text-align: center;
-}
-
-.weekday-cell {
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: var(--text-subtle);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.calendar-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 8px;
-}
-
-.day-cell {
-  min-height: 100px;
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
+.date-pill {
+  flex: 1;
+  min-width: 60px;
+  padding: 12px 8px;
   border-radius: var(--radius-md);
-  padding: 8px;
+  background-color: var(--bg-subtle);
   display: flex;
   flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
 }
 
-.day-cell.empty {
-  background-color: transparent;
-  border-color: transparent;
+.date-pill:hover {
+  background-color: var(--border-subtle);
+}
+
+.date-pill.active {
+  background-color: var(--primary);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(9, 9, 11, 0.25);
+}
+
+.day-name {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.8;
 }
 
 .day-number {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: var(--text-muted);
-  margin-bottom: 6px;
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 800;
+  line-height: 1;
 }
 
-.day-tasks-list {
+.task-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--accent-volt);
+  margin-top: 2px;
+}
+
+.date-pill.active .task-dot {
+  background-color: var(--accent-volt);
+}
+
+/* Selected Date Section */
+.selected-date-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.date-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.date-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.task-count-badge {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-main);
+  background-color: var(--accent-volt-light);
+  padding: 3px 10px;
+  border-radius: 99px;
+}
+
+.agenda-list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  overflow-y: auto;
+  gap: 12px;
 }
 
-.mini-task-pill {
-  font-size: 0.72rem;
-  font-weight: 600;
-  padding: 3px 6px;
-  border-radius: 4px;
-  background-color: var(--primary-light);
-  color: var(--primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  cursor: pointer;
+.empty-date-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 48px 20px;
+  gap: 12px;
 }
 
-.mini-task-pill.completed {
-  opacity: 0.5;
-  text-decoration: line-through;
+.empty-icon-circle {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
   background-color: var(--bg-subtle);
   color: var(--text-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 </style>
