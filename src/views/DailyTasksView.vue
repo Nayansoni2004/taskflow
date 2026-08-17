@@ -275,7 +275,6 @@ function handleDeleteTask(id) {
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
-  transition: all 0.2s ease;
 }
 
 .pill-btn:hover {
@@ -329,7 +328,6 @@ function handleDeleteTask(id) {
 .view-btn.active {
   background-color: var(--bg-surface);
   color: var(--primary);
-  box-shadow: var(--shadow-sm);
 }
 
 /* Tasks Layout */

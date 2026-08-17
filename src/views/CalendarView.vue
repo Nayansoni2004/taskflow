@@ -225,7 +225,6 @@ function handleDeleteTask(id) {
   align-items: center;
   gap: 4px;
   cursor: pointer;
-  transition: all 0.2s ease;
   position: relative;
 }
 
@@ -236,7 +235,6 @@ function handleDeleteTask(id) {
 .date-pill.active {
   background-color: var(--primary);
   color: #ffffff;
-  box-shadow: 0 4px 14px rgba(9, 9, 11, 0.25);
 }
 
 .day-name {

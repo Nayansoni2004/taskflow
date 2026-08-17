@@ -26,14 +26,17 @@ export class NotificationService {
   }
 
   static sendNotification(title, options = {}) {
+    if (typeof window !== 'undefined' && localStorage.getItem('notifications_enabled') === 'false') {
+      return false
+    }
     if (!this.isSupported() || Notification.permission !== 'granted') {
       return false
     }
 
     try {
       const notification = new Notification(title, {
-        icon: '/favicon.ico',
-        badge: '/favicon.ico',
+        icon: '/favicon.svg',
+        badge: '/favicon.svg',
         tag: options.tag || 'taskflow-notification',
         body: options.body || '',
         ...options
@@ -56,6 +59,9 @@ export class NotificationService {
    * Check task list for triggered reminders
    */
   static checkReminders(tasksStore) {
+    if (typeof window !== 'undefined' && localStorage.getItem('notifications_enabled') === 'false') {
+      return
+    }
     if (!this.isSupported() || Notification.permission !== 'granted') return
 
     const nowStr = new Date().toISOString().slice(0, 16) // YYYY-MM-DDTHH:mm

@@ -1,34 +1,25 @@
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref } from 'vue'
 
 const deferredPrompt = ref(null)
 const isInstalled = ref(false)
 
-export function usePWAInstall() {
-  function handleBeforeInstallPrompt(e) {
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault()
     deferredPrompt.value = e
-  }
-
-  function handleAppInstalled() {
+  })
+  window.addEventListener('appinstalled', () => {
     isInstalled.value = true
     deferredPrompt.value = null
+  })
+
+  // Check if running as standalone PWA
+  if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
+    isInstalled.value = true
   }
+}
 
-  onMounted(() => {
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
-    window.addEventListener('appinstalled', handleAppInstalled)
-
-    // Check if running as standalone PWA
-    if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
-      isInstalled.value = true
-    }
-  })
-
-  onUnmounted(() => {
-    window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
-    window.removeEventListener('appinstalled', handleAppInstalled)
-  })
-
+export function usePWAInstall() {
   async function promptInstall() {
     if (deferredPrompt.value) {
       deferredPrompt.value.prompt()

@@ -69,10 +69,10 @@ onUnmounted(() => {
     </Transition>
 
     <div v-if="!isLoading" class="app-shell">
-      <!-- Desktop Left Navigation Sidebar -->
-      <AppSidebar @add-task="openTask()" @open-focus="focusOpen = true" />
+      <!-- Desktop Left Navigation Sidebar - Hidden on Home Landing -->
+      <AppSidebar v-if="route.path !== '/'" @add-task="openTask()" @open-focus="focusOpen = true" />
 
-      <div class="main-content-wrapper">
+      <div :class="['main-content-wrapper', { 'full-width': route.path === '/' }]">
         <!-- Top Sticky Header -->
         <AppHeader :title="title" @add-task="openTask()" @open-focus="focusOpen = true" />
 

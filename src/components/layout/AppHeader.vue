@@ -31,14 +31,28 @@ const formattedDate = computed(() => {
 })
 
 async function toggleNotifications() {
-  const perm = await NotificationService.requestPermission()
-  uiStore.updateNotificationPermission(perm)
-  if (perm === 'granted') {
-    NotificationService.sendNotification('TaskFlow Alerts Enabled', {
-      body: 'You will receive push notifications for scheduled tasks & meetings!'
-    })
+  if (typeof window !== 'undefined' && 'Notification' in window) {
+    uiStore.updateNotificationPermission(Notification.permission)
+  }
+
+  if (uiStore.pushNotificationPermission !== 'granted') {
+    const perm = await NotificationService.requestPermission()
+    uiStore.updateNotificationPermission(perm)
+    if (perm === 'granted') {
+      if (!uiStore.notificationsEnabled) {
+        uiStore.toggleNotificationsEnabled()
+      }
+      NotificationService.sendNotification('TaskFlow Alerts Enabled', {
+        body: 'You will receive push notifications for scheduled tasks & meetings!'
+      })
+    }
   } else {
-    alert('Push notification permissions are disabled in your browser settings.')
+    uiStore.toggleNotificationsEnabled()
+    if (uiStore.notificationsEnabled) {
+      NotificationService.sendNotification('TaskFlow Alerts Enabled', {
+        body: 'You will receive push notifications for scheduled tasks & meetings!'
+      })
+    }
   }
 }
 
@@ -51,7 +65,7 @@ function clearSearch() {
   <header class="app-header">
     <div class="header-container">
       <!-- Mobile Logo Header (No PRO Badge) -->
-      <div class="mobile-logo-box">
+      <div :class="['mobile-logo-box', { 'show-desktop': route.path === '/' }]">
         <div class="mini-brand-icon">
           <CheckSquare :size="18" />
         </div>
@@ -59,7 +73,7 @@ function clearSearch() {
       </div>
 
       <!-- Page Title & Date Greeting -->
-      <div class="header-title-area">
+      <div v-if="route.path !== '/'" class="header-title-area">
         <h1 class="header-page-title">{{ title }}</h1>
         <span class="header-date-badge">{{ formattedDate }}</span>
       </div>
@@ -82,13 +96,15 @@ function clearSearch() {
       <div class="header-actions">
         <!-- Notification Toggle -->
         <button 
-          :class="['header-icon-btn', { active: uiStore.pushNotificationPermission === 'granted' }]" 
-          :title="uiStore.pushNotificationPermission === 'granted' ? 'Push Alerts Enabled' : 'Enable Push Alerts'"
+          :class="['header-icon-btn', { active: uiStore.pushNotificationPermission === 'granted' && uiStore.notificationsEnabled }]" 
+          :title="uiStore.pushNotificationPermission === 'granted' && uiStore.notificationsEnabled ? 'Mute Notifications' : 'Unmute Notifications'"
           @click="toggleNotifications"
         >
-          <Bell v-if="uiStore.pushNotificationPermission === 'granted'" :size="17" class="bell-active" />
+          <Bell v-if="uiStore.pushNotificationPermission === 'granted' && uiStore.notificationsEnabled" :size="17" class="bell-active" />
           <BellOff v-else :size="17" />
-          <span class="btn-text">Alerts</span>
+          <span class="btn-text">
+            {{ uiStore.pushNotificationPermission !== 'granted' ? 'Alerts' : (uiStore.notificationsEnabled ? 'Alerts: On' : 'Alerts: Off') }}
+          </span>
         </button>
 
         <!-- Focus Timer Button -->
@@ -144,6 +160,10 @@ function clearSearch() {
   display: none;
   align-items: center;
   gap: 8px;
+}
+
+.mobile-logo-box.show-desktop {
+  display: flex;
 }
 
 @media (max-width: 1024px) {
@@ -206,6 +226,12 @@ function clearSearch() {
   position: relative;
   display: flex;
   align-items: center;
+}
+
+@media (max-width: 1024px) {
+  .header-search-box {
+    display: none;
+  }
 }
 
 .search-icon {
@@ -285,10 +311,19 @@ function clearSearch() {
   background-color: var(--bg-subtle);
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
+  .header-container {
+    padding: 0 12px;
+  }
   .btn-text {
     display: none;
   }
+  .header-icon-btn {
+    padding: 8px;
+  }
+}
+
+@media (max-width: 640px) {
   .header-add-btn {
     display: none;
   }

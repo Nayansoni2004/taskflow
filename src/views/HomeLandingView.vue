@@ -6,8 +6,7 @@ import {
   Sparkles, 
   Calendar as CalendarIcon, 
   ArrowRight, 
-  Download, 
-  Zap 
+  Download 
 } from 'lucide-vue-next'
 
 const emit = defineEmits(['add-task', 'open-focus'])
@@ -17,17 +16,10 @@ const { promptInstall } = usePWAInstall()
 
 <template>
   <div class="page-container home-landing-container">
-    <!-- Hero Section (Simplified) -->
+    <!-- Hero Section (Minimalist & Flat) -->
     <section class="hero-section">
-      <div class="hero-badge">
-        <div class="badge-icon-dot">
-          <Zap :size="12" />
-        </div>
-        <span>Offline-First Productivity</span>
-      </div>
-
       <h1 class="hero-title">
-        Turn To Dos into Done with <span class="title-highlight">TaskFlow</span>
+        Turn To Dos into Done with TaskFlow
       </h1>
 
       <p class="hero-subtitle">
@@ -35,13 +27,13 @@ const { promptInstall } = usePWAInstall()
       </p>
 
       <div class="hero-cta-buttons">
-        <router-link to="/tasks" class="btn btn-volt hero-main-btn">
-          <span>Get Started</span>
-          <ArrowRight :size="18" />
+        <router-link to="/tasks" class="btn btn-primary hero-main-btn">
+          <span>Open Tasks</span>
+          <ArrowRight :size="16" />
         </router-link>
 
         <button class="btn btn-secondary hero-pwa-btn" @click="promptInstall">
-          <Download :size="18" />
+          <Download :size="16" />
           <span>Download App</span>
         </button>
       </div>
@@ -50,10 +42,10 @@ const { promptInstall } = usePWAInstall()
     <!-- Quick Navigation Feature Cards (3 Columns) -->
     <section class="features-section">
       <div class="features-grid">
-        <!-- Card 1: Daily Tasks -->
+        <!-- Card 1: Daily Tasks (Solid Black) -->
         <div class="flow-dark-card feature-card-dark" @click="router.push('/tasks')">
           <div class="card-icon-badge volt-badge">
-            <CheckCircle :size="20" />
+            <CheckCircle :size="18" />
           </div>
           <h3 class="card-title">Daily Tasks</h3>
           <p class="card-desc">
@@ -61,7 +53,7 @@ const { promptInstall } = usePWAInstall()
           </p>
           <div class="card-action-link">
             <span>Open tasks</span>
-            <ArrowRight :size="14" />
+            <ArrowRight :size="12" />
           </div>
         </div>
 
@@ -76,7 +68,7 @@ const { promptInstall } = usePWAInstall()
           </p>
           <div class="card-action-link">
             <span>View agenda</span>
-            <ArrowRight :size="14" />
+            <ArrowRight :size="12" />
           </div>
         </div>
 
@@ -91,7 +83,7 @@ const { promptInstall } = usePWAInstall()
           </p>
           <div class="card-action-link">
             <span>Start timer</span>
-            <ArrowRight :size="14" />
+            <ArrowRight :size="12" />
           </div>
         </div>
       </div>
@@ -103,10 +95,12 @@ const { promptInstall } = usePWAInstall()
 .home-landing-container {
   display: flex;
   flex-direction: column;
-  gap: 32px;
-  max-width: 960px;
+  gap: 40px;
+  max-width: 800px;
   margin: 0 auto;
-  padding-top: 16px;
+  padding: 60px 24px;
+  min-height: 100vh;
+  justify-content: center;
 }
 
 /* Hero Section */
@@ -115,96 +109,54 @@ const { promptInstall } = usePWAInstall()
   flex-direction: column;
   align-items: center;
   text-align: center;
-  max-width: 680px;
+  max-width: 600px;
   margin: 0 auto;
 }
 
-.hero-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 5px 12px;
-  border-radius: 99px;
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: var(--text-main);
-  margin-bottom: 16px;
-}
-
-.badge-icon-dot {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background-color: var(--accent-volt);
-  color: var(--text-main);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 .hero-title {
-  font-size: 2.8rem;
+  font-size: 2.5rem;
   font-weight: 800;
   letter-spacing: -0.03em;
   line-height: 1.15;
+  color: var(--text-main);
   margin-bottom: 12px;
 }
 
 @media (max-width: 640px) {
   .hero-title {
-    font-size: 2rem;
-  }
-}
-
-.title-highlight {
-  position: relative;
-  display: inline-block;
-
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: 2px;
-    left: 0;
-    right: 0;
-    height: 10px;
-    background-color: var(--accent-volt);
-    z-index: -1;
-    border-radius: 3px;
+    font-size: 1.8rem;
   }
 }
 
 .hero-subtitle {
-  font-size: 1.05rem;
+  font-size: 1rem;
   color: var(--text-muted);
-  line-height: 1.45;
+  line-height: 1.4;
   margin-bottom: 24px;
-  max-width: 540px;
 }
 
 .hero-cta-buttons {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 16px;
   flex-wrap: wrap;
   justify-content: center;
 }
 
 .hero-main-btn {
-  padding: 12px 24px;
-  font-size: 0.95rem;
+  padding: 10px 20px;
+  font-size: 0.9rem;
 }
 
 .hero-pwa-btn {
-  padding: 12px 20px;
-  font-size: 0.95rem;
+  padding: 10px 18px;
+  font-size: 0.9rem;
 }
 
 /* Features Section */
 .features-section {
   width: 100%;
+  margin-top: 12px;
 }
 
 .features-grid {
@@ -220,24 +172,29 @@ const { promptInstall } = usePWAInstall()
 }
 
 .feature-card-dark, .feature-card-white {
-  padding: 24px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   cursor: pointer;
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   border: 1px solid var(--border-subtle);
-  transition: border-color 0.2s ease;
 }
 
-.feature-card-dark:hover, .feature-card-white:hover {
-  border-color: var(--border-medium);
+.feature-card-dark {
+  background-color: var(--bg-dark-card);
+  color: #ffffff;
+  border-color: var(--bg-dark-card);
+}
+
+.feature-card-white {
+  background-color: #ffffff;
 }
 
 .card-icon-badge {
-  width: 38px;
-  height: 38px;
-  border-radius: var(--radius-md);
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -254,7 +211,7 @@ const { promptInstall } = usePWAInstall()
 }
 
 .card-title {
-  font-size: 1.15rem;
+  font-size: 1.05rem;
   font-weight: 800;
   color: var(--text-main);
 }
@@ -264,24 +221,20 @@ const { promptInstall } = usePWAInstall()
 }
 
 .card-desc {
-  font-size: 0.88rem;
-  line-height: 1.4;
-  flex: 1;
+  font-size: 0.82rem;
+  line-height: 1.35;
+  color: var(--text-muted);
 }
 
 .feature-card-dark .card-desc {
   color: #a1a1aa;
 }
 
-.feature-card-white .card-desc {
-  color: var(--text-muted);
-}
-
 .card-action-link {
   display: flex;
   align-items: center;
-  gap: 5px;
-  font-size: 0.82rem;
+  gap: 4px;
+  font-size: 0.78rem;
   font-weight: 700;
   margin-top: 4px;
 }

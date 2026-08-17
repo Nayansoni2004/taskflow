@@ -13,9 +13,19 @@ export const useUIStore = defineStore('ui', () => {
   const pushNotificationPermission = ref(
     typeof window !== 'undefined' && 'Notification' in window ? Notification.permission : 'denied'
   )
+  const notificationsEnabled = ref(
+    typeof window !== 'undefined' ? localStorage.getItem('notifications_enabled') === 'true' : false
+  )
 
   function updateNotificationPermission(val) {
     pushNotificationPermission.value = val
+  }
+
+  function toggleNotificationsEnabled() {
+    notificationsEnabled.value = !notificationsEnabled.value
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('notifications_enabled', notificationsEnabled.value.toString())
+    }
   }
 
   return {
@@ -25,6 +35,8 @@ export const useUIStore = defineStore('ui', () => {
     activeStatus,
     viewMode,
     pushNotificationPermission,
-    updateNotificationPermission
+    notificationsEnabled,
+    updateNotificationPermission,
+    toggleNotificationsEnabled
   }
 })

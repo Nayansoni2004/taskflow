@@ -1,63 +1,33 @@
 <script setup>
-import { ref, computed, onUnmounted } from 'vue'
+import { computed } from 'vue'
 import { X, Play, Pause, RotateCcw, Sparkles, Coffee } from 'lucide-vue-next'
+import { useFocusStore } from '../../stores/focusStore.js'
 
 const emit = defineEmits(['close'])
-
-const mode = ref('focus') // 'focus' | 'break'
-const timeLeft = ref(25 * 60) // 25 minutes
-const isRunning = ref(false)
-let timerId = null
+const focusStore = useFocusStore()
 
 const minutes = computed(() => {
-  const m = Math.floor(timeLeft.value / 60)
+  const m = Math.floor(focusStore.remainingSeconds / 60)
   return m < 10 ? `0${m}` : `${m}`
 })
 
 const seconds = computed(() => {
-  const s = timeLeft.value % 60
+  const s = focusStore.remainingSeconds % 60
   return s < 10 ? `0${s}` : `${s}`
 })
 
 function toggleTimer() {
-  if (isRunning.value) {
-    pauseTimer()
-  } else {
-    startTimer()
-  }
-}
-
-function startTimer() {
-  isRunning.value = true
-  timerId = setInterval(() => {
-    if (timeLeft.value > 0) {
-      timeLeft.value--
-    } else {
-      pauseTimer()
-      switchMode(mode.value === 'focus' ? 'break' : 'focus')
-    }
-  }, 1000)
-}
-
-function pauseTimer() {
-  isRunning.value = false
-  if (timerId) clearInterval(timerId)
+  focusStore.toggle()
 }
 
 function resetTimer() {
-  pauseTimer()
-  timeLeft.value = mode.value === 'focus' ? 25 * 60 : 5 * 60
+  focusStore.reset()
 }
 
 function switchMode(newMode) {
-  mode.value = newMode
-  pauseTimer()
-  timeLeft.value = newMode === 'focus' ? 25 * 60 : 5 * 60
+  const mins = newMode === 'focus' ? 25 : 5
+  focusStore.setMode(newMode, mins)
 }
-
-onUnmounted(() => {
-  if (timerId) clearInterval(timerId)
-})
 </script>
 
 <template>
@@ -79,15 +49,15 @@ onUnmounted(() => {
       <!-- Mode Selector -->
       <div class="mode-tabs">
         <button 
-          :class="['mode-tab', { active: mode === 'focus' }]" 
+          :class="['mode-tab', { active: focusStore.mode === 'focus' }]" 
           @click="switchMode('focus')"
         >
           <Sparkles :size="15" />
           Focus (25m)
         </button>
         <button 
-          :class="['mode-tab', { active: mode === 'break' }]" 
-          @click="switchMode('break')"
+          :class="['mode-tab', { active: focusStore.mode === 'shortBreak' }]" 
+          @click="switchMode('shortBreak')"
         >
           <Coffee :size="15" />
           Break (5m)
@@ -98,16 +68,16 @@ onUnmounted(() => {
       <div class="timer-display">
         <div class="time-text">{{ minutes }}:{{ seconds }}</div>
         <span class="timer-status">
-          {{ isRunning ? (mode === 'focus' ? 'Deep Focus Block' : 'Relaxing Break') : 'Ready' }}
+          {{ focusStore.isRunning ? (focusStore.mode === 'focus' ? 'Deep Focus Block' : 'Relaxing Break') : 'Ready' }}
         </span>
       </div>
 
       <!-- Control Buttons -->
       <div class="timer-controls">
         <button class="btn btn-volt main-control-btn" @click="toggleTimer">
-          <Pause v-if="isRunning" :size="20" />
+          <Pause v-if="focusStore.isRunning" :size="20" />
           <Play v-else :size="20" />
-          <span>{{ isRunning ? 'Pause' : 'Start Session' }}</span>
+          <span>{{ focusStore.isRunning ? 'Pause' : 'Start Session' }}</span>
         </button>
 
         <button class="btn btn-secondary reset-btn" title="Reset Timer" @click="resetTimer">
