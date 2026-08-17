@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useUIStore } from '../../stores/uiStore.js'
+import { useFocusStore } from '../../stores/focusStore.js'
 import { NotificationService } from '../../services/notificationService.js'
 import { usePWAInstall } from '../../composables/usePWAInstall.js'
 import { 
@@ -23,7 +24,8 @@ const emit = defineEmits(['add-task', 'open-focus'])
 
 const route = useRoute()
 const uiStore = useUIStore()
-const { promptInstall } = usePWAInstall()
+const focusStore = useFocusStore()
+const { promptInstall, isInstalled } = usePWAInstall()
 
 const formattedDate = computed(() => {
   const now = new Date()
@@ -108,13 +110,17 @@ function clearSearch() {
         </button>
 
         <!-- Focus Timer Button -->
-        <button class="header-icon-btn focus-btn" title="Focus Timer" @click="emit('open-focus')">
-          <Sparkles :size="17" />
+        <button 
+          :class="['header-icon-btn', 'focus-btn', { active: focusStore.isRunning }]" 
+          title="Focus Timer" 
+          @click="emit('open-focus')"
+        >
+          <Sparkles :size="17" :class="{ 'bell-active': focusStore.isRunning }" />
           <span class="btn-text">Focus</span>
         </button>
 
         <!-- PWA Download Button -->
-        <button class="header-icon-btn pwa-btn" title="Install Offline App" @click="promptInstall">
+        <button v-if="!isInstalled" class="header-icon-btn pwa-btn" title="Install Offline App" @click="promptInstall">
           <Download :size="17" />
           <span class="btn-text">Install</span>
         </button>

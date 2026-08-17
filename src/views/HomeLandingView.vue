@@ -11,7 +11,7 @@ import {
 
 const emit = defineEmits(['add-task', 'open-focus'])
 const router = useRouter()
-const { promptInstall } = usePWAInstall()
+const { promptInstall, isInstalled } = usePWAInstall()
 </script>
 
 <template>
@@ -32,7 +32,7 @@ const { promptInstall } = usePWAInstall()
           <ArrowRight :size="16" />
         </router-link>
 
-        <button class="btn btn-secondary hero-pwa-btn" @click="promptInstall">
+        <button v-if="!isInstalled" class="btn btn-secondary hero-pwa-btn" @click="promptInstall">
           <Download :size="16" />
           <span>Download App</span>
         </button>

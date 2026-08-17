@@ -23,7 +23,7 @@ const route = useRoute()
 const router = useRouter()
 const taskStore = useTaskStore()
 const uiStore = useUIStore()
-const { promptInstall } = usePWAInstall()
+const { promptInstall, isInstalled } = usePWAInstall()
 
 const navItems = [
   { name: 'Home', path: '/', icon: Home },
@@ -116,7 +116,7 @@ function selectCategory(catName) {
         <span>Focus Timer</span>
       </button>
 
-      <button class="pwa-download-btn" @click="promptInstall">
+      <button v-if="!isInstalled" class="pwa-download-btn" @click="promptInstall">
         <Download :size="16" />
         <span>Download App</span>
       </button>
